@@ -979,7 +979,7 @@ rownames(pos_df) = rownames(df_num)
 pheatmap(data, scale = "row",  labels_row = rep(" ", nrow(data)), cluster_cols = FALSE, color =  hcl.colors(20, "BlueRed2", rev = FALSE)) 
 
 
-## OVERLAP WITH QUANTSEQ DATA + PUBLIC DATA AND CREATE VENN DIAGRAMS ##
+## ----- OVERLAP WITH QUANTSEQ DATA + PUBLIC DATA AND CREATE VENN DIAGRAMS ----- ##
 public_data.degs <- read_excel("Data/DEGs_Studies_full_list.xlsx")
 public_data.dmgs <-read_excel("Data/DMGs_full_studies.xlsx")
 DEGs.DMGs_int <- read_excel("Results/DEGs_DMGs_integration.xlsx") ## DEGs and DMGs from integration of transcriptome and methylome-wide datasets
