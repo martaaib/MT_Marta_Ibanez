@@ -30,9 +30,15 @@ Information about repository and folders content.
 | DMGs_Studies_full_list.xlsx | List of DMGs corresponding to the probes identifies as differentially methylated from the corresponding GDM methylome-wide studies. |
 | Transcriptome_Participant_characteristics.xlsx | Participant characteristics from transcriptome-wide selected studies. |
 | Methylome_Participant_characteristics.xlsx | Participant characteristics from methylome-wide selected studies. |
-| scSeq-Results.xlsx | Genes found in each cell type in the single-cell placental transcriptome. |
+| scSeq-Results.xlsx | Genes found in each cell type in the single-cell placental transcriptome. (Pavličev M et al. 2017) |
+| scSeq-Results_mat.xlsx | Matrix of TPM counts from the placental single-cell transcriptome. (Pavličev M et al. 2017)
+| samples_GSE70493.txt | Samples from GSE70493 transcriptome-wide integrated dataset. |
+| Samples_GSE19649.txt | Samples from GSE19649 transcriptome-wide integrated dataset. |
+| data1_filtered.common_TRANSCRIPTOME.csv | Filtered and common transcripts in transcriptome-wide dataset 1: GSE70493. |
+| data2_filtered.common_TRANSCRIPTOME.csv | Filtered and common transcripts in transcriptome-wide dataset 2: GSE19649. |
 | Combined_Data1_Data2_matrix_transcriptome.csv | Combined normalized values from the integrated transcriptome datasets. |
 | Final_Samples_Data1&2_transcriptome.csv | Table of final selected samples and their corresponding information to the integrated transcriptome-wide datasets. |
+
 
 ## Results ##
 | File | Description |
