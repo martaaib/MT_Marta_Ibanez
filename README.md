@@ -29,6 +29,7 @@ Information about repository and folders content.
 | DEGs_Studies_full_list.xlsx | List of DEGs from the corresponding Gestational Diabetes Mellitus (GDM) transcriptome-wide studies. |
 | DMGs_Studies_full_list.xlsx | List of DMGs corresponding to the probes identifies as differentially methylated from the corresponding GDM methylome-wide studies. |
 | Transcriptome_Participant_characteristics.xlsx | Participant characteristics from transcriptome-wide selected studies. |
+| Methylome_Participant_characteristics.xlsx | Participant characteristics from methylome-wide selected studies. |
 | scSeq-Results.xlsx | Genes found in each cell type in the single-cell placental transcriptome. |
 | Combined_Data1_Data2_matrix_transcriptome.csv | Combined normalized values from the integrated transcriptome datasets. |
 | Final_Samples_Data1&2_transcriptome.csv | Table of final selected samples and their corresponding information to the integrated transcriptome-wide datasets. |
