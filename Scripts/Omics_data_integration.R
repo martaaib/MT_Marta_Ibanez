@@ -150,7 +150,6 @@ plotPCA(eset, labels= sample_names.S1$matName, dataDesc="Normalized data",
         formapunts=c(rep(16,63)), myCex=0.8, colors = sample_names.S1$color)
 
 
-
 ## ----- PLS-DA ----- ##
 ## Function to select the desired number of most variable genes
 select_top_variable.genes <- function(counts, TOPNUM){
@@ -176,6 +175,7 @@ colnames_toberemoved <- sample_names.S1[sample_names.S1$matName %in%  c("normal_
 samples1.removed1 <- sample_names.S1[sample_names.S1$matName %nin% c("normal_R53", "normal_R53_rep1", "normal_R53_rep2", "normal_R3", "normal_R36", "GDM_R4", "normal_R5", "normal_R33",  "GDM_R6", "normal_R1", "normal_R1_rep1", "normal_R1_rep2", "GDM_R2", "GDM_R6", "GDM_R13", "normal_R7", "GDM_R26"),]
 counts.dataset1.2 <- counts.dataset1[rownames(counts.dataset1) %nin% colnames_toberemoved,]
 group.dataset1.2 <- samples1.removed1$Description
+
 ## perform PLS-DA with ropls package
 placenta_gene_expression.plsda2 <- opls(counts.dataset1.2, factor(group.dataset1.2), predI = 2) 
 plot(placenta_gene_expression.plsda2,
@@ -436,7 +436,6 @@ pheatmap(logCPM, scale = "row", cluster_cols = FALSE, labels_row = rep(" ", nrow
 
 ## Integration of single-cell, UMAP dimensionality reduction and generation of heatmap
 sc_mat <- read_excel("scSeq-Results.xlsx")
-markers <- read_excel("Markers.xlsx")
 deg <- read.csv2("DEGs_data_integration.csv")
 colnames(deg)[9] <- "Gene"
 head(sc_mat)
@@ -465,7 +464,7 @@ pheatmap(data, scale = "row",  labels_row = rep(" ", nrow(data)), cluster_cols =
 
 ## ------------- Plots for enrichment analysis --------------- ##
 ## BIOLOGICAL PROCESS
-BP <- read.delim("GO_Biological_Process_2021_table_final.txt")
+BP <- read.delim("Results/GO_Biological_Process_2021_table_final.txt")
 BP <- BP[BP$P.value < 0.05,]
 BP <- BP[order(str_count(string = BP$Genes, pattern = ";"), decreasing = TRUE),]
 BP$label <- paste0("n = ", str_count(string = BP$Genes, pattern = ";")+1)
@@ -475,7 +474,7 @@ p <- ggplot(data = BP[1:20,], aes(x = -log10(P.value), y = Term)) + geom_col(fil
                                                     inherit.aes = TRUE)
 
 ## MOLECULAR FUNCTION
-MF <- read.delim("GO_Molecular_Function_2021_table-2_final.txt")
+MF <- read.delim("Results/GO_Molecular_Function_2021_table-2_final.txt")
 MF <- MF[MF$P.value < 0.05,]
 MF <- MF[order(str_count(string = MF$Genes, pattern = ";"), decreasing = TRUE),]
 MF$label <- paste0("n = ", str_count(string = MF$Genes, pattern = ";")+1)
@@ -484,7 +483,7 @@ ggplot(data = MF[1:20,], aes(x = -log10(P.value), y = Term)) + geom_col(fill = "
                                                     position = position_dodge(width = 1),
                                                     inherit.aes = TRUE)
 ## CELLULAR COMPONENT
-CC <- read.delim("GO_Cellular_Component_2021_table-2_final.txt")
+CC <- read.delim("Results(GO_Cellular_Component_2021_table-2_final.txt")
 CC <- CC[CC$P.value < 0.05,]
 CC <- CC[order(str_count(string = CC$Genes, pattern = ";"), decreasing = TRUE),]
 CC$label <- paste0("n = ", str_count(string = CC$Genes, pattern = ";")+1)
@@ -494,7 +493,7 @@ ggplot(data = CC[1:14,], aes(x = -log10(P.value), y = Term)) + geom_col(fill = "
                                                     position = position_dodge(width = 1),
                                                     inherit.aes = TRUE)
 ## KEGG 
-kegg <- read.delim("KEGG_2021_Human_table-2.txt")
+kegg <- read.delim("Results/KEGG_2021_Human_table-2.txt")
 kegg <- kegg[kegg$P.value < 0.05,]
 kegg <- kegg[order(str_count(string = kegg$Genes, pattern = ";"), decreasing = TRUE),]
 kegg$label <- paste0("n = ", str_count(string = kegg$Genes, pattern = ";")+1)
