@@ -14,9 +14,13 @@ Universitat de Barcelona (UB) and University of Cambridge (Department of Physiol
 ### Readme: 
 Information about repository and folders content.
 
-## Scripts
+## Scripts ##
+| Script file | Description |
+| ----------------------------- | ----------------------- |
+| Differential_gene_expression_in-house_dataset.R | Differential expression analysis of in-house dataset, and analysis of DEGs through enrichment analysis, and overlap with published gathered data from transcriptome/methylome-wide papers. |
+| Meta_Analysis_Overlay.R | Overlay of genes found in the methylome/transcriptome-wide selected studies performed in Gestational Diabetes Mellitus Placenta and analysis of participant chatacteristics. |
+| Omics_data_integration.R | Integration of transcriptome and methylome studies, correlation between DNA methylation and gene expression results, integration with the placental single-cell transcriptome and generation of graphs. |
 
+## Data ##
 
-
-## Data
 
