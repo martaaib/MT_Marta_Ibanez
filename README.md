@@ -42,8 +42,7 @@ Information about repository and folders content.
 | GSE153220_samples.txt | Samples from the second methylome-wide dataset used in the DNA methylation integration. |
 | 48639-non-specific-probes-Illumina450k.csv | Cross-reactive probes from Illumina 450K Methylation Array. |
 | Bvals_final.csv | Beta values of the probes from the corresponding final selected samples from the integration of methylome-wide datasets. |
-| final_samples_methylation.csv | Selected samples used for differential methylation analysis of integrated methylome-wide placental datasets 
-. |
+| final_samples_methylation.csv | Selected samples used for differential methylation analysis of integrated methylome-wide placental datasets. |
 
 
 
