@@ -45,4 +45,8 @@ Information about repository and folders content.
 | GO_Cellular_Component_2021_table_TRANSCRIPTOME.txt | GO enrichment analysis of DEGs from the integrated selected transcriptome-wide datasets for cellular component category. |
 | GO_Molecular_Function_2021_table_TRANSCRIPTOME.txt | GO enrichment analysis of DEGs from the integrated selected transcriptome-wide datasets for molecular function category. |
 | KEGG_2021_Human_table_TRANSCRIPTOME.txt | KEGG pathway analysis of DEGs from the integrated selected transcriptome-wide datasets. |
-|
+| DMPs_data_integration.csv | DMPs from differential methylation analysis of integrated transcriptome-wide datasets. |
+| GO_Biological_Process_2021_table_METHYLATION.txt | GO enrichment analysis of DMGs from the integrated selected methylome-wide datasets for biological process category. |
+| GO_Cellular_Component_2021_table_METHYLATION.txt | GO enrichment analysis of DMGs from the integrated selected methylome-wide datasets for cellular component category. |
+| GO_Molecular_Function_2021_table_METHYLATION.txt | GO enrichment analysis of DMGs from the integrated selected methylome-wide datasets for molecular function category. |
+| KEGG_2021_Human_table_METHYLATION.txt | KEGG pathway analysis of DMGs from the integrated selected methylome-wide datasets. |
