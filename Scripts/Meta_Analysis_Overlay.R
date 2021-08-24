@@ -182,7 +182,7 @@ ggplot(data = significant_results.reactome, aes(x = -log10(Entities.pValue), y =
   geom_label(aes(label = Submitted.entities.found), nudge_y = 0, nudge_x = 0.005, angle =-90, size = 6) +   theme(text  = element_text(size=20) )                                                                                                                                                          
 
 ## ------ Participant characteristics statistical test between studies ------ ##
-chars <- read_excel("Data/BMI_full_studies_Transcriptome.xlsx")
+chars <- read_excel("Data/Methylome_Participant_characteristics.xlsx")
 chars <- t(chars)
 chars <- data.frame(chars)
 colnames(chars) <- chars[1,] 
@@ -235,9 +235,4 @@ c6 <- merge(ESF, meth_genes, by = "genes")
 c7 <- merge(EVT, meth_genes, by = "genes")
 c8 <- merge(SYN, meth_genes, by = "genes")
 
-
-
-message("+-------------------------------------------------------------------------------+")
-message("+             OVERLAY OF DEGs/DMGs with in-house dataset                        +")
-message("+-------------------------------------------------------------------------------+")
 
