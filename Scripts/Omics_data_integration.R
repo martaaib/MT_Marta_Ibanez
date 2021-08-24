@@ -1005,9 +1005,9 @@ data.venn <- list(
 ggVennDiagram(data.venn)
 qs <- data.frame(qs)
 DEGs.venn <- list(
-  public.DEGs = c(public.DEGs),
-  DEGs_int =c(DEGs_int ),
-  QS = c(qs))
+  public.DEGs = c(public.DEGs$Gene),
+  DEGs_int =c(DEGs_int$Gene ),
+  QS = c(qs$Gene))
 t <- ggVennDiagram(DEGs.venn)
 colnames(public.DEGs) <- "Gene"
 colnames(DEGs_int) <- "Gene"
@@ -1017,6 +1017,7 @@ public.DEGs <- data.frame(public.DEGs)
 DEGs_int <- data.frame(DEGs_int)
 m <- join_all(list(public.DEGs,DEGs_int, qs), type = "inner", by = "Gene")
 
+## Venn diagram of public DMGs and DMGs from integration of methylome-wide results
 DMGs.venn <- list(
   public.DMGs = c(public.DMGs),
   DMGs_int = c(DMGs_int))
@@ -1024,19 +1025,7 @@ ggVennDiagram(DMGs.venn)
 write.table(public.DEGs,"t")
 data.studies <-matrix(NA, ncol = 5)
 
-
-data_studies <- read_excel("~/Desktop/Master_UB/TFM/All_DEGs_DMGs.xlsx")
-key <- c(unlist(unique(data.venn)))
-studies2 <- data.frame(
-  key = key,
-  do.call(
-    cbind,
-    lapply(
-      data_studies[,1:ncol(data_studies)],
-      function(x) ifelse(key %in% x == TRUE, 1, 0))))
-
-
-## Venn diagram
+## Venn diagram of integration results: common DEGs and DMGs 
 int.venn <- list(
   DEGs_int =c(DEGs_int$Gene ),
   DMGs_int = c(DMGs_int))
