@@ -503,3 +503,580 @@ ggplot(data = kegg[1:7,], aes(x = -log10(P.value), y = Term)) + geom_col(fill = 
   theme(text =  element_text(size=20)) + geom_label(aes(label = label),hjust = -0.5, size = 4,
                                                     position = position_dodge(width = 1),
                                                     inherit.aes = TRUE)
+
+
+
+message("+-------------------------------------------------------------------------------+")
+message("+              INTEGRATION OF METHYLOMEE-WIDE STUDIES                           +")
+message("+-------------------------------------------------------------------------------+")
+
+## ---------------------- DATASET 1: GSE70453 ---------------------- ##
+## LOAD DATA, STORE INFORMATION AND P-VALUES
+## Intensity matrix
+untar("GSE70453_RAW.tar", exdir = "GSE70453_RAW/idat")
+Study1 <- read.csv("GSE70453_Matrix_signal_intensities.csv")
+Study1 <- as.matrix(Study1)
+rownames(Study1) <- Study1[,1]
+Study1.ids <- Study1[,1]
+Study1  <- Study1[,-1]
+rownames(Study1)
+head(Study1)
+
+## Separate matrix
+p.values.stored <- seq(from = 3, to = ncol(Study1), by = 3)
+p.values <- as.matrix(Study1[, p.values.stored])
+probes <- rownames(p.values)
+mn.stored <- seq(from = 2, to = ncol(Study1), by = 3)
+un.stored <- seq(from = 1, to = ncol(Study1), by = 3)
+mn <- as.matrix(Study1[, mn.stored])
+un <- as.matrix(Study1[,un.stored ])
+
+## Load into minfi object: MethylSet
+data1 <- readGEORawFile(filename ="GSE70453_Matrix_signal_intensities.csv", Uname = "Unmethylated.Signal", Mname = "Methylated.signal",  )
+
+## Samples
+GSE70453_samples <- read.delim("GSE70453_samples.txt")
+files <- sampleNames(data1)
+GSE70453_samples <- cbind(GSE70453_samples, files)
+
+## Load samples in minfi object
+GSE70453_samples$Group <- "GDM"
+normal <- grep("Normal", GSE70453_samples$MatName)
+GSE70453_samples$Group[normal] <- "Normal"
+
+# visualise what the data looks like before and after normalisation
+densityPlot(getBeta(data1), sampGroups=GSE70453_samples$Group,main="Raw", legend=FALSE)
+legend("top", legend = levels(factor(GSE70453_samples$Group)), 
+       text.col=brewer.pal(8,"Dark2"))
+
+
+## Filtering of samples
+p.values <- apply(p.values, 2, function(x) as.numeric(as.character(x)))
+rownames(p.values) <- probes
+head(p.values)
+keep <- colMeans(p.values) < 0.05
+data1.samples_filtered <- data1[,keep] ## all significant samples, none removed
+data1.samples_filtered
+
+## Normalization
+data1.samples_filtered.norm <- preprocessQuantile(data1.samples_filtered)
+densityPlot(getBeta(data1.samples_filtered.norm), sampGroups=GSE70453_samples$Group,
+            main="Normalized", legend=FALSE)
+legend("top", legend = levels(factor(GSE70453_samples$Group)), 
+       text.col=brewer.pal(8,"Dark2"))
+
+# ensure probes are in the same order in the mSetSq and detP objects
+p.values <- p.values[match(featureNames(data1.samples_filtered.norm),rownames(p.values)),] 
+
+# remove any probes that have failed in one or more samples
+keep <- rowSums(p.values < 0.05) == ncol(data1.samples_filtered.norm) 
+table(keep)
+data1.samples_filtered.norm <- data1.samples_filtered.norm[keep,]
+data1.samples_filtered.norm ## as this dataset only contains women, we do not need to remove any sex-specific probes
+
+# remove probes with SNPs at CpG site
+data1.samples_filtered.norm <- dropLociWithSnps(data1.samples_filtered.norm)
+data1.samples_filtered.norm
+
+# exclude cross reactive probes 
+xReactiveProbes <- read.csv(file="48639-non-specific-probes-Illumina450k.csv")
+head(xReactiveProbes)
+keep <- !(featureNames(data1.samples_filtered.norm) %in% xReactiveProbes$TargetID)
+table(keep)
+data1.filtered.norm <- data1.samples_filtered.norm[keep,] 
+data1.filtered.norm
+
+## Save normalized  M values 
+norm.Mvals <- getM(data1.filtered.norm)
+head(norm.Mvals)
+
+## Save normalized  BETA values 
+norm.Bvals <- getBeta(data1.filtered.norm)
+head(norm.Bvals)
+colnames(norm.Bvals) <- GSE70453_samples$MatName
+
+## Principal Component Analysis (PCA) of Beta values
+## set colors
+GSE70453_samples$color <- "#0072B2"
+GSE70453_samples$color[grep("Normal", GSE70453_samples$Group)] <- "#D55E00"
+## with labels
+pca1 <- prcomp(t(getBeta(data1.filtered.norm)))
+pca1 <- pca1$x
+rownames(pca1) <- GSE70453_samples$MatName
+pca1 <- pca1[,1:2]
+batch1 <- pca1[pca1[,2] < 0,]
+batch1 <- rownames(batch1)
+batch2 <-pca1[pca1[,2] > 0,]
+batch2 <- rownames(batch2)
+GSE70453_samples$batch <- NA
+GSE70453_samples$batch[which(GSE70453_samples$MatName %in% batch1)] <- 1
+GSE70453_samples$batch[which(GSE70453_samples$MatName %in% batch2)] <- 2
+
+## Remove samples
+toremove <- c("R22", "R19", "R20", "R13", "R66", "R59", "R26")
+GSE70453_samples_r <- filter(GSE70453_samples, grepl(paste(toremove, collapse="|"), GSE70453_samples$MatName))
+GSE70453_samples <- GSE70453_samples[GSE70453_samples$MatName %nin% GSE70453_samples_r$MatName,]
+norm.Bvals <- norm.Bvals[,which(colnames(norm.Bvals) %nin% GSE70453_samples_r$MatName)]
+
+## PCA plot
+plotPCA(norm.Bvals, labels= GSE70453_samples$MatName, dataDesc="Normalized data",
+        formapunts=c(rep(16,82)), myCex=0.8, colors = GSE70453_samples$color)
+
+## M-values
+## PCA
+plotPCA(getM(data1.filtered.norm),  dataDesc="Normalized data",
+        formapunts=c(rep(16,82)), myCex=0.8, colors = GSE70453_samples$color)
+
+
+
+## ---------------------- DATASET 2:GSE153220  ---------------------- ##
+untar("GSE153220_RAW.tar", exdir = "GSE153220/idat")
+## RUN: list idat files and unzip
+idatFiles <- list.files("GSE153220/idat", pattern = "idat.gz$", full = TRUE)
+sapply(idatFiles, gunzip, overwrite = TRUE)
+
+## Annotation
+ann450k <- getAnnotation(IlluminaHumanMethylation450kanno.ilmn12.hg19)
+head(ann450k)
+
+# Samples
+GSE153220_samples <- read.delim("GSE153220/idat/GSE153220_samples.txt")
+GSE153220_samples <- cbind(GSE153220_samples, sampleNames(data2))
+GSE153220_samples$Group <- "GDM"
+normal <- grep("Normal", GSE153220_samples$MatName)
+GSE153220_samples$Group[normal] <- "Normal"
+
+## Load idat files
+data2 <- read.metharray.exp("GSE153220/idat")
+data2
+sampleNames(data2) <- GSE153220_samples$MatName
+
+## Quality control
+detP <- detectionP(data2)
+head(detP)
+pal <- brewer.pal(8,"Dark2")
+barplot(colMeans(detP), col=pal[factor(GSE153220_samples$Group)], las=2, 
+        cex.names=0.8, ylab="Mean detection p-values")
+abline(h=0.05,col="red")
+legend("topleft", legend=levels(factor(GSE153220_samples$Group)), fill=pal,
+       bg="white")
+qcReport(data2, sampGroups=GSE153220_samples$Group, 
+         pdf="qcReport.pdf")
+
+# remove poor quality samples
+keep <- colMeans(detP) < 0.05
+table(keep) ## No sample needs to be removed
+
+
+## Normalization
+mSetSq2 <- preprocessFunnorm(data2)
+
+# visualise what the data looks like before and after normalisation
+par(mfrow=c(1,2))
+densityPlot(data2, sampGroups=GSE153220_samples$Group,main="Raw", legend=FALSE)
+legend("top", legend = levels(factor(GSE153220_samples$Group)), 
+       text.col=brewer.pal(8,"Dark2"))
+densityPlot(getBeta(mSetSq2), sampGroups=GSE153220_samples$Group,
+            main="Normalized", legend=FALSE)
+legend("top", legend = levels(factor(GSE153220_samples$Group)), 
+       text.col=brewer.pal(8,"Dark2"))
+
+
+## Filtering probes
+# ensure probes are in the same order in the mSetSq and detP objects
+detP <- detP[match(featureNames(mSetSq2),rownames(detP)),] 
+
+# remove any probes that have failed in one or more samples
+keep <- rowSums(detP < 0.05) == ncol(mSetSq2) 
+table(keep)
+mSetSqFlt2 <- mSetSq2[keep,]
+mSetSqFlt2 
+
+# remove probes with common SNPs which may affect  CpG sites/ we will be removing the default ones, but you can also remove all of those with minor allele frequencies
+mSetSqFlt2 <- dropLociWithSnps(mSetSqFlt2)
+mSetSqFlt2
+
+
+## We can also filter all of those  of those probes that are know to be cross-reactive, probes that have been demonstrated to map to multiple places in the genome
+## Chen et al. 2013 
+keep <- !(featureNames(mSetSqFlt2) %in% xReactiveProbes$TargetID)
+table(keep)
+mSetSqFlt2 <- mSetSqFlt2[keep,] 
+mSetSqFlt2
+
+## MDS
+pal <- brewer.pal(8,"Dark2")
+plotMDS(getM(mSetSqFlt2), top=1000, gene.selection="common", 
+        col=pal[factor(GSE153220_samples$Group)], cex=0.8)
+legend("right", legend=levels(factor(GSE153220_samples$Group)), text.col=pal,
+       cex=0.65, bg="white")
+
+## PCA
+GSE153220_samples$color <- "#0072B2"
+GSE153220_samples$color[normal] <- "#D55E00"
+
+## Without batch effects removed
+## Beta values
+plotPCA(getBeta(mSetSqFlt2),  dataDesc="Normalized data",
+        formapunts=c(rep(16,36)), myCex=0.8, colors = GSE153220_samples$color, labels = GSE153220_samples$MatName)
+
+## Save normalized M values
+norm.Mvals2 <- getM(mSetSqFlt2)
+hist(norm.Mvals2)
+head(norm.Mvals2)
+norm.Mvals2.2=norm.Mvals2[apply(norm.Mvals2,1,var)>0,]
+
+
+## Save normalized BETA values
+norm.Bvals2 <- getBeta(mSetSqFlt2)
+head(norm.Bvals2)
+
+## NORMALIZED INTENSITY VALUES
+mSetSqFlt2
+
+## --- Common M and Beta values --- ##
+Mvals.data1 <- data.frame(rownames(norm.Mvals))
+head(Mvals.data1)
+colnames(Mvals.data1) <- "ID"
+Mvals.data2 <- data.frame(rownames(norm.Mvals2))
+head(Mvals.data2)
+colnames(Mvals.data2) <- "ID"
+head(Mvals.data2)
+common.Mvals <- merge(Mvals.data1, Mvals.data2, by = "ID")
+common.Mvals <- na.omit(common.Mvals)
+
+## Select data1 and data 2 common M and B values
+Mvals1.common <- norm.Mvals[common.Mvals$ID,]
+Mvals2.common <- as.matrix(norm.Mvals2[common.Mvals$ID,])
+
+Bvals1.common <- norm.Bvals[common.Mvals$ID,]
+Bvals2.common <- norm.Bvals2[common.Mvals$ID,]
+
+## Check order 
+all(rownames(Mvals1.common) == rownames(Mvals2.common))
+all(rownames(Bvals1.common) == rownames(Bvals2.common))
+
+## ------ Pearson correlarion ------- ##
+## Using normalized Beta  values
+joined_Bvals <- cbind(Bvals1.common, Bvals2.common)
+joined_samples <- rbind(GSE153220_samples[,c(1:3,6)], GSE70453_samples[,c(1:3,7)])
+joined_samples$color<- NA
+
+## Color by condition
+joined_samples$color[grep("GDM", joined_samples$MatName)] <- "#0072B2"
+joined_samples$color[grep("Normal", joined_samples$MatName)] <- "#D55E00"
+joined_samples$color2 <- NA
+
+## Color by study
+joined_samples$color2[grep("Genomic", joined_samples$Description)] <- "#0072B2"
+joined_samples$color2[grep("Placenta", joined_samples$Description)] <- "#D55E00"
+
+## Without batch effects removed
+Meth.corr2 <- cor(Bvals1.common, Bvals2.common, method = "pearson")
+summary(Meth.corr2) 
+
+## With batch effects removed
+
+## PCA
+plotPCA(joined_Bvals, labels= joined_samples$SampleFile, dataDesc="Normalized data",
+        formapunts=c(rep(16,63)), myCex=0.8, colors = joined_samples$color)
+
+## PCA plot with ggplot
+joined_samples$Group <- "GDM"
+joined_samples$Group[grep("Normal", joined_samples$MatName)] <- "Normal"
+pca2 <- prcomp(t(joined_Bvals))
+pca.plot <- as.data.frame(pca2$x)
+eigs <- pca2$sdev^2
+percentVar <- c(round(100*(eigs[1] / sum(eigs))), round(100*(eigs[2] / sum(eigs))))
+pca.plot$group <- joined_samples$Group
+pca.plot$study <- joined_samples$batch
+pca.plot$study[pca.plot$study %in% c(1,2)] <- "Binder AM, 2015"
+pca.plot$study[pca.plot$study %in% c(3,4)] <- "Awamleh Z, 2021"
+
+ggplot(pca.plot, aes(PC1, PC2), show.legend = TRUE) +
+  geom_point(size=2, alpha=0.75, aes(shape = study, col = group)) +
+  #egeom_encircle(aes(group = group, fill = NULL)) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  coord_fixed() + labs(col = "Group", shape = "Study", size = 3) +
+  theme_bw() + theme(legend.text=element_text(size=15), axis.title = element_text(size=15), legend.title = element_text(size=15))
+
+## Remove selected unwanred samples
+colnames(joined_Bvals) <- joined_samples$SampleFile
+
+## Samoples that will be removed
+tobrem <- c("R58", "R75", "R51", "R50", "R80", "R68", "R47", "R61", "R62", "R64", "R49", "R70", "R60", "R73", "R63", "R77", "R67", "R65", "R56",
+            "R48", "R53", "R71", "R72", "R66", "R69", "R78", "R82", "R81", "R79", "R52", "R76", "R55", "R54", "R74", "R57", "R59", "R038", "R033", "R030", "R070", "R029", "R45", "R46")
+toberem2 <- c( "R8", "R020", "R11", "R7", "R10", "R16", "R013", "R023", "R42", "R15", "R17", "R002", "R031", "R035","R045",
+               "R025", "R037", "R028", "R44", "R024", "R27", "R043", "R041", "R044", "R018", "R042", "R048", "R37", "R048", "R1")
+tobrem <- c(tobrem, toberem2)
+
+## Samples to keep
+tokeep <- c("GSM4636037",	"GSM4636038",	"GSM4636039",	"GSM4636040",	"GSM4636041",	"GSM4636043",	"GSM4636044",	"GSM4636047",	"GSM4636048"	,"GSM4636052",	"GSM4636058",	"GSM4636062",	"GSM4636068",	"GSM4636069",	"GSM4636071",	"GSM1755028",	"GSM1755029",	"GSM1755030",	"GSM1755031",	"GSM1755032",	"GSM1755035",	
+            "GSM1755047",	"GSM1755049",	"GSM1755050",	"GSM1755051",	"GSM1755054",	"GSM1755055",	"GSM1755056",	"GSM1755057",	"GSM1755058",	"GSM1755059",	"GSM1755060",	"GSM1755061"	,"GSM1755062",	"GSM1755064",	"GSM1755065",	"GSM1755066",	"GSM1755067")
+
+joined_samples2 <- filter(joined_samples, grepl(paste(tobrem, collapse="|"), joined_samples$MatName))
+joined_samples.flt <- joined_samples[joined_samples$MatName %nin% joined_samples2$MatName,]
+joined_samples.flt <- joined_samples[joined_samples$SampleFile %in% tokeep,]
+colnames(joined_Bvals) <- joined_samples$SampleFile
+
+### LOAD DATA FROM B-VALUES OF DESIRED SAMPLES ##
+joined_Bvals <- read.csv2("Bvals_final.csv")
+head(joined_Bvals)
+joined_Bvals.flt <- joined_Bvals[,-1]
+rownames(joined_Bvals.flt) <- joined_Bvals$X
+joined_samples.flt <- read.csv2("final_samples_meth.csv")
+
+## Beta
+joined_Bvals.flt <- joined_Bvals[,colnames(joined_Bvals) %in%  joined_samples.flt$SampleFile]
+
+## PCA OF COMBINED SAMPLES
+plotPCA(joined_Bvals.flt, labels= joined_samples.flt$MatName, dataDesc="Normalized data",
+        formapunts=c(rep(16,63)), myCex=0.8, colors = joined_samples.flt$color)
+
+joined_samples$Group <- "GDM"
+joined_samples$Group[grep("Normal", joined_samples$MatName)] <- "Normal"
+
+## Filtered
+joined_samples.flt$Group <- "GDM"
+joined_samples.flt$Group[grep("Normal", joined_samples.flt$MatName)] <- "Normal"
+
+## final PCA plot with ggplot ##
+pca3 <- prcomp(t(joined_Bvals.flt))
+pca3.plot <- as.data.frame(pca3$x)
+eigs <- pca3$sdev^2
+percentVar <- c(round(100*(eigs[1] / sum(eigs))), round(100*(eigs[2] / sum(eigs))))
+pca3.plot$group <- joined_samples.flt$Group
+pca3.plot$study <- joined_samples.flt$batch
+pca3.plot$study[pca3.plot$study %in% c(1,2)] <- "Binder AM, 2015"
+pca3.plot$study[pca3.plot$study %in% c(3,4)] <- "Awamleh Z, 2021"
+
+ggplot(pca3.plot, aes(PC1, PC2), show.legend = TRUE) +
+  geom_point(size=2, alpha=0.75, aes(shape = study, col = group)) +
+  #geom_encircle(aes(group = group, col = group)) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  coord_fixed() + labs(col = "Group", shape = "Study", size = 3) +
+  theme_bw() + theme(legend.text=element_text(size=15), axis.title = element_text(size=15), legend.title = element_text(size=15))
+
+
+## --------- Differential methylation analysis --------- ##
+groups <- as.factor(joined_samples.flt$Group)
+groups <- relevel(groups, "Normal")
+design <-  model.matrix(object = ~ groups)
+colnames(design) <- c("Normal", "GDM")
+rownames(design) <- joined_samples.flt$MatName
+fit <- eBayes(lmFit(joined_Bvals.flt, design))
+y <- topTable(fit, coef=2, number=Inf)
+DEgenes <- y[y$adj.P.Val<0.05,]
+
+## Annotation of regions ##
+ann450kSub <- ann450k[match(rownames(joined_Bvals.flt),ann450k$Name),
+                      c(1:4,12:19,24:ncol(ann450k))]
+DMPs <- topTable(fit, num= 7023, coef=2, genelist = ann450kSub)
+head(DMPs)
+write.table(DMPs, file="DMPs.csv", sep=",", row.names=FALSE)
+
+DMPs.B <- match(rownames(DMPs), rownames(joined_Bvals.flt))
+DMPs.B <- joined_Bvals.flt[DMPs.B,]
+all(rownames(DMPs.B) == rownames(DMPs))
+
+DMPs.Bvals <- cbind(DMPs, DMPs.B)
+write.table(DMPs.Bvals, file="DMPs_Bvals.csv", sep=",", row.names=FALSE)
+
+
+## Keep names of genes and save into file ##
+genes <- data.frame(DMPs$UCSC_RefGene_Name)
+genes <- genes[- which(genes$DMPs.UCSC_RefGene_Name == ""),]
+genes <- data.frame(unlist(strsplit(genes, ";")))
+genes <- unique(genes)
+write.csv(genes, "methylated_genes.csv")
+write.csv2(joined_samples.flt,"final_samples_meth.csv")
+write.csv2(joined_Bvals.flt, "Bvals_final.csv")
+
+## Heatmap ##
+DMGs <- read.csv("DMPs_Bvals.csv")
+samples <- read.csv2("final_samples_meth.csv")
+heatmap.data <- DMGs[, 29:ncol(DMGs)]
+test <- data.frame(colnames(heatmap.data),samples$SampleFile) ## same order
+colnames(heatmap.data) <- samples$MatName
+heatmap.data <- heatmap.data[,order(colnames(heatmap.data))] 
+logCPM <- t(scale(t(heatmap.data)))
+pheatmap(heatmap.data, scale = "row", cluster_cols = TRUE, labels_row = rep(" ", nrow(heatmap.data)), color = hcl.colors(20, "Cork", rev = FALSE))
+pheatmap(logCPM, scale = "row", cluster_cols = FALSE, labels_row = rep(" ", nrow(heatmap.data)))
+
+## ENRICHMENT ANALYSIS
+## BIOLOGICAL PROCESS
+bp <- read.delim("GO_Biological_Process_2021_table-2_METH_FINAL.txt")
+bp <- bp[bp$P.value < 0.05,]
+bp <- bp[order(str_count(string = bp$Genes, pattern = ";"), decreasing = TRUE),]
+bp$label <- paste0("n = ", str_count(bp$Genes, ";")+1)
+p <-ggplot(data = bp[1:20,], aes(x = -log10(P.value), y = Term)) + geom_col(fill = "#99CC99") + theme_minimal()+ xlab("-log10(P-value)") + ylab("Biological process") +
+  theme(text =  element_text(size=20)) + geom_label(aes(label = label),hjust = -0.5, size = 6,
+                                                    position = position_dodge(width = 1),
+                                                    inherit.aes = TRUE)
+
+## MOLECULAR FUNCTION
+mf <- read.delim("GO_Molecular_Function_2021_table-2._METH_FINALtxt.txt")
+mf <- mf[mf$P.value < 0.05,]
+mf <- mf[order(str_count(string = mf$Genes, pattern = ";"), decreasing = TRUE),]
+mf$label <- paste0("n = ", str_count(mf$Genes, ";")+1)
+p <- ggplot(data = mf[1:20,], aes(x = -log10(P.value), y = Term)) + geom_col(fill = "#6699CC") + theme_minimal()+ xlab("-log10(P-value)") + ylab("Molecular function") + 
+  geom_label(aes(label = label),hjust = -0.5, size = 6,
+             position = position_dodge(width = 1),
+             inherit.aes = TRUE) + theme(text =  element_text(size=20))
+
+## CELLULAR COMPONENT
+cc <- read.delim("GO_Cellular_Component_2021_table-2_METH_FINAL.txt")
+cc <- cc[cc$P.value < 0.05,]
+cc <- cc[order(str_count(string = cc$Genes, pattern = ";"), decreasing = TRUE),]
+cc$label <- paste0("n = ", str_count(cc$Genes, ";")+1)
+p <- ggplot(data = cc, aes(x = -log10(P.value), y = Term)) + geom_col(fill = "salmon2") + theme_minimal()+ xlab("-log10(P-value)") + 
+  ylab("Cellular component") + theme(text =  element_text(size=30)) + geom_label(aes(label = label),hjust = -0.5, size = 6,
+                                                                                 position = position_dodge(width = 1),
+                                                                                 inherit.aes = TRUE)
+
+## KEGG
+KEGG <- read.delim("KEGG_2021_Human_table-2_METH_FINAL.txt")
+KEGG <- KEGG[KEGG$P.value < 0.05,]
+KEGG <- KEGG[order(str_count(string = KEGG$Genes, pattern = ";"), decreasing = TRUE),]
+KEGG$label <- paste0("n = ", str_count(KEGG$Genes, ";")+1)
+ggplot(data = KEGG, aes(x = -log10(P.value), y = Term)) + geom_col(fill = "pink3") + theme_minimal()+ xlab("-log10(P-value)") + 
+  ylab("KEGG pathways") + theme(text =  element_text(size=20)) + geom_label(aes(label = label),hjust = -0.5, size = 4,
+                                                                            position = position_dodge(width = 1),
+                                                                            inherit.aes = TRUE)
+
+## Integration with single-cell placental transcriptome + UMAP dimensionality reduction
+sc_mat <- read_excel("/Volumes/TOSHIBA EXT/TFM/Data_Integration/Transcriptome/scSeq-Results.xlsx")
+markers <- read_excel("/Volumes/TOSHIBA EXT/TFM/Data_Integration/Transcriptome/Markers.xlsx")
+dmg <- genes
+colnames(dmg) <- "Gene"
+head(dmg)
+colnames(sc_mat) <- sc_mat[3,]
+sc_mat <- sc_mat[-c(1:3),]
+found <- merge(sc_mat, dmg, by = "Gene")
+found <- found[,colnames(found) != "SE"]
+rownames(found) <- found$Gene
+found <- found[,-1]
+data <- found[,1:8] 
+data<- apply(data, 2, function(x) as.numeric(as.character(x)))
+rownames(data) <- rownames(found)
+data <- data[rowSums(data) > 0,]
+try <- umap(data)
+df <- try$layout
+colnames(df) <-  c("UMAP_1", "UMAP_2")
+groups <- data.frame(apply(data, 1, max))
+groups$cell <- colnames(data)[apply(data,1,which.max)]
+df <- cbind(df, data.frame(rownames(df)), type = "UMAP",celltype =  groups$cell)
+## plot UMAP
+ggplot(df, aes(x = UMAP_1, y = UMAP_2)) +
+  geom_point(size = 0.7, alpha = 0.5, aes(col = celltype))  + theme_minimal() + labs(col = "Cell type") + theme(legend.text=element_text(size=10), legend.title  = element_text(size=10))
+degs2 <- data.frame(rownames(df))
+
+## PLOT HEATMAP OF SINGLE-CELL MATRIX CORRESPONDING GENES
+cols <- colorRampPalette(brewer.pal(5, "Blues"))
+pos_df = data.frame("Pos" = df_used$Pos) ## add source
+rownames(pos_df) = rownames(df_num)
+pheatmap(data, scale = "row",  labels_row = rep(" ", nrow(data)), cluster_cols = FALSE, color =  hcl.colors(20, "BlueRed2", rev = FALSE)) 
+
+
+## OVERLAP WITH QUANTSEQ DATA + PUBLIC DATA AND CREATE VENN DIAGRAMS ##
+public_data.degs <- read_excel("~/Desktop/Master_UB/TFM/DEGs_Studies_full_list.xlsx")
+public_data.dmgs <-read_excel("~/Desktop/Master_UB/TFM/DMGs_full_studies.xlsx")
+DEGs.DMGs_int <- read_excel("~/Desktop/Master_UB/TFM/DEGs_DMGs_integration.xlsx")
+QS.DEGs <- rread.csv2("~/Documents/GitHub/QuantSeq-data-analysis/Results/DEGs_GDMvsLEAN/pls_DEGs_GDMvsLEAN.csv")
+qs <- data.frame(QS.DEGs$external_geneid)
+qs <- qs[qs$QS.DEGs.external_geneid != "",]
+colnames(public_data.degs) <- c("genes", "genes", "genes", "genes")
+colnames(public_data.dmgs) <- c("genes", "genes", "genes")
+public.DEGs <- na.omit(unique(rbind(data.frame(genes = public_data.degs[,1]), data.frame(genes = public_data.degs[,2]), data.frame(genes = public_data.degs[,3]), data.frame(genes = public_data.degs[,4]))))
+public.DEGs <- apply(public.DEGs,2, function(x) as.character(x))
+public.DMGs <- apply(public.DMGs,2, function(x) as.character(x))
+public.DMGs <- na.omit(unique(rbind(data.frame(genes = public_data.dmgs[,1]), data.frame(genes = public_data.dmgs[,2]), data.frame(genes = public_data.dmgs[,3]))))
+DEGs_int <- na.omit(DEGs.DMGs_int[,1])
+DEGs_int <- apply(DEGs_int,2, function(x) as.character(x))
+DMGs_int <- na.omit(DEGs.DMGs_int[,2])
+DMGs_int <- apply(DMGs_int,2, function(x) as.character(x))
+data.venn <- list(
+  public.DEGs = c(public.DEGs$Gene),
+  public.DMGs = c(public.DMGs),
+  DEGs_int =c(DEGs_int ),
+  DMGs_int = c(DMGs_int),
+  QS = c(qs))
+ggVennDiagram(data.venn)
+qs <- data.frame(qs)
+DEGs.venn <- list(
+  public.DEGs = c(public.DEGs),
+  DEGs_int =c(DEGs_int ),
+  QS = c(qs))
+t <- ggVennDiagram(DEGs.venn)
+colnames(public.DEGs) <- "Gene"
+colnames(DEGs_int) <- "Gene"
+colnames(qs) <- "Gene"
+
+public.DEGs <- data.frame(public.DEGs)
+DEGs_int <- data.frame(DEGs_int)
+m <- join_all(list(public.DEGs,DEGs_int, qs), type = "inner", by = "Gene")
+
+DMGs.venn <- list(
+  public.DMGs = c(public.DMGs),
+  DMGs_int = c(DMGs_int))
+ggVennDiagram(DMGs.venn)
+write.table(public.DEGs,"t")
+data.studies <-matrix(NA, ncol = 5)
+
+
+data_studies <- read_excel("~/Desktop/Master_UB/TFM/All_DEGs_DMGs.xlsx")
+key <- c(unlist(unique(data.venn)))
+studies2 <- data.frame(
+  key = key,
+  do.call(
+    cbind,
+    lapply(
+      data_studies[,1:ncol(data_studies)],
+      function(x) ifelse(key %in% x == TRUE, 1, 0))))
+
+## -- UpsetR overlap -- ##
+plot <- upset(studies2, nsets =5)
+
+int.venn <- list(
+  DEGs_int =c(DEGs_int$Gene ),
+  DMGs_int = c(DMGs_int))
+ggVennDiagram(int.venn)
+
+## ------ Correlate gene expression with methylation ------- ##
+expression.vals <- read.csv2("/Volumes/TOSHIBA EXT/TFM/Data_Integration/Transcriptome/Combined_Data1_Data2_matrix.csv")
+degs.data_int <- read.csv2("/Volumes/TOSHIBA EXT/TFM/Data_Integration/Transcriptome/DEGs_data_integration.csv")
+samples <- read.csv2("/Volumes/TOSHIBA EXT/TFM/Data_Integration/Transcriptome/Final_Samples_Data1&2.csv")
+mod = model.matrix(~relevel(as.factor(Description), "Normal"), data=samples)
+colnames(mod) <- c("Normal", "GDM")
+combat_edata3 = ComBat(dat=expression.vals[,-1], batch = samples$batch, mod = mod )
+rownames(combat_edata3) <- expression.vals$X
+cor.data1 <- combat_edata3[which(rownames(combat_edata3) %in% degs.data_int$X),]
+DMGs1 <- data.frame(Gene = DMGs_int)
+colnames(DMGs1) <- "Gene"
+DEGS1 <- data.frame(Gene = degs.data_int$external_geneid)
+colnames(DEGS1) <- "Gene"
+ovlp <- merge(DMGs1,DEGS1 , by = "Gene") 
+ens <- degs.data_int$X[degs.data_int$external_geneid %in% c(ovlp$Gene)]
+cor.data1 <- data.frame(combat_edata3[ens,])
+rownames(cor.data1) <- ovlp$Gene
+cor.data1 <- cor.data1[order(rownames(cor.data1)),]
+DMGs <- read.csv("DMPs_Bvals.csv")
+out <- cSplit(DMGs, "UCSC_RefGene_Name", sep=";", "long")
+DMGs <- out[out$UCSC_RefGene_Name  %in% c(ovlp$Gene) ,]
+DMGs$mean <- rowMeans(DMGs[,29:ncol(DMGs)])
+cor.data2 <- aggregate(mean ~ UCSC_RefGene_Name, DMGs, mean)
+
+cor.data1.2 <- data.frame(rowMeans(cor.data1))
+cor.data2.2 <- data.frame(cor.data2$mean)
+rownames(cor.data2.2) <- cor.data2$UCSC_RefGene_Name
+cor.data2.2 <- cor.data2.2[order(rownames(cor.data2.2)),]
+t <- cbind(cor.data1.2, cor.data2.2)
+
+correlation <- cor.test(matrix(t(cor.data1.2)), matrix(t(cor.data2.2)), type = "pearson")
+
+
+
+
+
