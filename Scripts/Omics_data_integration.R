@@ -57,9 +57,9 @@ library(splitstackshape)
 
 ## ---- Directory ---- ##
 setwd("~/Documents/GitHub/MT_Marta_Ibanez/")
+
 ## --- Additional functions/expressions used in the code --- ##
 `%nin%` = Negate(`%in%`)
-
 
 message("+-------------------------------------------------------------------------------+")
 message("+           INTEGRATION OF TRANSCRIPTOME-WIDE STUDIES                           +")
@@ -506,7 +506,7 @@ ggplot(data = kegg[1:7,], aes(x = -log10(P.value), y = Term)) + geom_col(fill = 
 
 
 message("+-------------------------------------------------------------------------------+")
-message("+              INTEGRATION OF METHYLOMEE-WIDE STUDIES                           +")
+message("+              INTEGRATION OF METHYLOME-WIDE STUDIES                           +")
 message("+-------------------------------------------------------------------------------+")
 
 ## ---------------------- DATASET 1: GSE70453 ---------------------- ##
@@ -894,7 +894,7 @@ write.csv2(joined_samples.flt,"final_samples_meth.csv")
 write.csv2(joined_Bvals.flt, "Bvals_final.csv")
 
 ## Heatmap ##
-DMGs <- read.csv("DMPs_Bvals.csv")
+DMGs <- read.csv("Results/DMPs_Bvals.csv")
 samples <- read.csv2("Data/final_samples_meth.csv")
 heatmap.data <- DMGs[, 29:ncol(DMGs)]
 test <- data.frame(colnames(heatmap.data),samples$SampleFile) ## same order
@@ -996,6 +996,8 @@ DEGs_int <- na.omit(DEGs.DMGs_int[,1])
 DEGs_int <- apply(DEGs_int,2, function(x) as.character(x))
 DMGs_int <- na.omit(DEGs.DMGs_int[,2])
 DMGs_int <- apply(DMGs_int,2, function(x) as.character(x))
+
+## Venn diagram of all gathered genes
 data.venn <- list(
   public.DEGs = c(public.DEGs$Gene),
   public.DMGs = c(public.DMGs),
@@ -1004,6 +1006,8 @@ data.venn <- list(
   QS = c(qs))
 ggVennDiagram(data.venn)
 qs <- data.frame(qs)
+
+## Venn diagram of all DEGs identified
 DEGs.venn <- list(
   public.DEGs = c(public.DEGs$Gene),
   DEGs_int =c(DEGs_int$Gene ),
@@ -1039,6 +1043,7 @@ mod = model.matrix(~relevel(as.factor(Description), "Normal"), data=samples)
 colnames(mod) <- c("Normal", "GDM")
 combat_edata3 = ComBat(dat=expression.vals[,-1], batch = samples$batch, mod = mod )
 rownames(combat_edata3) <- expression.vals$X
+
 cor.data1 <- combat_edata3[which(rownames(combat_edata3) %in% degs.data_int$X),]
 DMGs1 <- data.frame(Gene = DMGs_int)
 colnames(DMGs1) <- "Gene"
@@ -1049,6 +1054,7 @@ ens <- degs.data_int$X[degs.data_int$external_geneid %in% c(ovlp$Gene)]
 cor.data1 <- data.frame(combat_edata3[ens,])
 rownames(cor.data1) <- ovlp$Gene
 cor.data1 <- cor.data1[order(rownames(cor.data1)),]
+
 DMGs <- read.csv("Results/DMPs_Bvals.csv")
 out <- cSplit(DMGs, "UCSC_RefGene_Name", sep=";", "long")
 DMGs <- out[out$UCSC_RefGene_Name  %in% c(ovlp$Gene) ,]
@@ -1062,8 +1068,3 @@ cor.data2.2 <- cor.data2.2[order(rownames(cor.data2.2)),]
 t <- cbind(cor.data1.2, cor.data2.2)
 
 correlation <- cor.test(matrix(t(cor.data1.2)), matrix(t(cor.data2.2)), type = "pearson")
-
-
-
-
-
