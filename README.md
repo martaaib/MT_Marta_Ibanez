@@ -22,5 +22,11 @@ Information about repository and folders content.
 | Omics_data_integration.R | Integration of transcriptome and methylome studies, correlation between DNA methylation and gene expression results, integration with the placental single-cell transcriptome and generation of graphs. |
 
 ## Data ##
-
+| File | Description |
+| ----------------------------- | ----------------------- |
+| BMI_full_studies_Methylation.xlsx | BMI information from participants in DNA methylation selected studies. |
+| BMI_full_studies_Transcriptome.xlsx | BMI information from participants in transcriptome-wide selected studies. |
+| DEGs_Studies_full_list.xlsx | List of DEGs from the corresponding Gestational Diabetes Mellitus (GDM) transcriptome-wide studies. |
+| DMGs_Studies_full_list.xlsx | List of DMGs corresponding to the probes identifies as differentially methylated from the corresponding GDM methylome-wide studies. |
+| scSeq-Results.xlsx | Genes found in each cell type in the single-cell placental transcriptome. |
 
