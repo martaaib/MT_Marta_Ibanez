@@ -34,3 +34,12 @@ Information about repository and folders content.
 | Combined_Data1_Data2_matrix_transcriptome.csv | Combined normalized values from the integrated transcriptome datasets. |
 | Final_Samples_Data1&2_transcriptome.csv | Table of final selected samples and their corresponding information to the integrated transcriptome-wide datasets. |
 
+## Results ##
+| Common_DMGs.xlsx | 44 DMGs found to be present in all the three methylome-wide selected studies. |
+| Common_genes_in-house&published_data.xlsx | Genes found to be differentially expressed and methylated in the in-house dataset, selected transcriptome/methylome-wide studies. |
+| Reactome_results_DMGs.csv | Reactome results from analysis of DMGs found to be present in all selected methylome-wide studies. |
+| GO_Biological_Process_2021_table_TRANSCRIPTOME.txt | GO enrichment analysis of DEGs from the integrated selected transcriptome-wide datasets for biological process category. |
+| GO_Cellular_Component_2021_table_TRANSCRIPTOME.txt | GO enrichment analysis of DEGs from the integrated selected transcriptome-wide datasets for cellular component category. |
+| GO_Molecular_Function_2021_table_TRANSCRIPTOME.txt | GO enrichment analysis of DEGs from the integrated selected transcriptome-wide datasets for molecular function category. |
+| KEGG_2021_Human_table_TRANSCRIPTOME.txt | KEGG pathway analysis of DEGs from the integrated selected transcriptome-wide datasets. |
+|
