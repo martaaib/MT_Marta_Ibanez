@@ -17,7 +17,7 @@ Information about repository and folders content.
 ## Scripts ##
 | Script file | Description |
 | ----------------------------- | ----------------------- |
-| Differential_gene_expression_in-house_dataset.R | Differential expression analysis of in-house dataset, and analysis of DEGs through enrichment analysis, and overlap with published gathered data from transcriptome/methylome-wide papers. |
+| Differential_gene_expression_in-house_dataset.R (Needs confidential data to be run) | Differential expression analysis of in-house dataset, and analysis of DEGs through enrichment analysis, and overlap with published gathered data from transcriptome/methylome-wide papers. |
 | Meta_Analysis_Overlay.R | Overlay of genes found in the methylome/transcriptome-wide selected studies performed in Gestational Diabetes Mellitus Placenta and analysis of participant chatacteristics. |
 | Omics_data_integration.R | Integration of transcriptome and methylome studies, correlation between DNA methylation and gene expression results, integration with the placental single-cell transcriptome and generation of graphs. |
 
@@ -40,6 +40,7 @@ Information about repository and folders content.
 | Common_DMGs.xlsx | 44 DMGs found to be present in all the three methylome-wide selected studies. |
 | Common_genes_in-house&published_data.xlsx | Genes found to be differentially expressed and methylated in the in-house dataset, selected transcriptome/methylome-wide studies. |
 | Reactome_results_DMGs.csv | Reactome results from analysis of DMGs found to be present in all selected methylome-wide studies. |
+| DEGs_data_integration.csv | DEGs from differential expression analysis of integrated transcriptome-wide datasets. |
 | GO_Biological_Process_2021_table_TRANSCRIPTOME.txt | GO enrichment analysis of DEGs from the integrated selected transcriptome-wide datasets for biological process category. |
 | GO_Cellular_Component_2021_table_TRANSCRIPTOME.txt | GO enrichment analysis of DEGs from the integrated selected transcriptome-wide datasets for cellular component category. |
 | GO_Molecular_Function_2021_table_TRANSCRIPTOME.txt | GO enrichment analysis of DEGs from the integrated selected transcriptome-wide datasets for molecular function category. |

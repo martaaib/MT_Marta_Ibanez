@@ -269,12 +269,12 @@ all.genesV$label1 <- NA
 all.genesV$label1[which(is.na(all.genesV$Regulation1) == FALSE)] <- all.genesV$external_geneid[which(is.na(all.genesV$Regulation1) == FALSE)]
 
 ## plot
-pdf(file = "~/Documents/GitHub/QuantSeq-data-analysis/Results/Classical_Volcano_plot_EdgeR_GDMvsLEAN.pdf", width = 8, height = 6)
+
 ggplot(data=all.genesV, aes(x=logFC, y=-log10(FDR), col=Regulation1, label=label1)) + 
   geom_point() +  geom_vline(xintercept = c(-1,1), col = "black", linetype = "dashed") + geom_hline(yintercept = 1.3, col = "black", linetype = "dashed") +
   theme_minimal()  + geom_label_repel(aes(label=label1), show.legend = FALSE, size=2, max.overlaps = 25) + 
   labs(title = "edgeR:  GDM vs LEAN ")  + scale_colour_manual( values = c("#3399FF","#FF3333" ), name = "Regulation")
-dev.off()
+
 
 ## --- PLS: Adding size as VIP in volcano plot --- ##
 ## -- Set direction of regulation according to PLS and edgeR -- ##
@@ -293,22 +293,20 @@ all.genesV$label2 <- NA
 all.genesV$label2[which(all.genesV$Regulation2 != "NA")] <- all.genesV$external_geneid[which(all.genesV$Regulation2 != "NA")]
 
 ## plot with labels
-pdf(file = "~/Documents/GitHub/QuantSeq-data-analysis/Results/Volcanoplot_PLS_VIP_GDMvsLEAN.pdf")
 ggplot(data=all.genesV, aes(x=logFC, y=-log10(FDR), col=Regulation2, label=label2)) + 
   geom_point(aes(size = size)) + 
   theme_minimal() +  geom_vline(xintercept = c(-1,1), col = "black", linetype = "dashed" ) + geom_hline(yintercept = 1.3, col = "black", linetype = "dashed") +
   geom_label_repel(aes(label=label2), show.legend = FALSE, size=2, max.overlaps = 10) + labs(title = "edgeR + PLS: DEGs from GDM vs LEAN samples", size = "VIP")  + 
   scale_colour_manual( values = c("#3399FF","#CCCCCC","#FF3333" ), name = "Regulation") + guides(fill=guide_legend(title="VIP")) + ylim(c(-1, 25))
-dev.off()
+
 
 ## plot without labels
-pdf(file = "~/Documents/GitHub/QuantSeq-data-analysis/Results/Volcanoplot_PLS_VIP_GDMvsLEAN_without_labels.pdf")
 ggplot(data=all.genesV, aes(x=logFC, y=-log10(FDR), col=Regulation2, label=label2)) + 
   geom_point(aes(size = size)) + 
   theme_minimal() +  geom_vline(xintercept = c(-1,1), col = "black", linetype = "dashed" ) + geom_hline(yintercept = 1.3, col = "black", linetype = "dashed") +
   labs(title = "edgeR + PLS: DEGs from GDM vs LEAN samples", size = "VIP")  + 
   scale_colour_manual( values = c("#3399FF","#CCCCCC","#FF3333" ), name = "Regulation") + guides(fill=guide_legend(title="VIP"))+ ylim(c(-1, 40)) + xlim(c(-5.5, 5.5))
-dev.off()
+
 ## ----- HEATMAP ----- ##
 DEGs.heatmap <- DEGs[,10:ncol(DEGs)]
 ## Avoid duplicated gene names
@@ -352,8 +350,8 @@ message("+----------------------------------------------------------------------
 ## ------ GDM vs LEAN ----- ##
 
 ## --- Load data (if necessary) --- ##
-DEGs <- read.csv2("~/Documents/GitHub/QuantSeq-data-analysis/Results/DEGs_GDMvsLEAN/pls_DEGs_GDMvsLEAN.csv")
-all.genes <- read.csv2("~/Documents/GitHub/QuantSeq-data-analysis/Results/DEGs_GDMvsLEAN/pls_allgenes_GDMvsLEAN.csv")
+DEGs <- read.csv2("pls_DEGs_GDMvsLEAN.csv")
+all.genes <- read.csv2("pls_allgenes_GDMvsLEAN.csv")
 
 ## Change format in order to run KEGG pathway enrichment analysis
 search_kegg_organism('hsa', by='kegg_code')
@@ -414,14 +412,13 @@ ggplot(data = BP_results, aes(x = -log10(pvalue), y = Description)) + geom_col(f
 ggplot(data = MF_results, aes(x = -log10(pvalue), y = Description, fill = Regulation)) + geom_col() + theme_minimal() + scale_fill_brewer(palette="Blues", name = "Regulation") + theme_minimal()+ xlab("-log10(P-value)") + ylab("GO terms: molecular function") + theme(text = element_text(size = 15))
 
 ggplot(data = CC_results, aes(x = -log10(pvalue), y = Description, fill = Regulation)) + geom_col() 
-
-
 ggplot(data = KEGG, aes(x = -log10(pvalue), y = Description)) + geom_col(fill = "#6699CC") + theme_minimal()+ xlab("-log10(P-value)") + ylab("KEGG pathways") + theme_minimal() + xlab("-log10(P-value)") + ylab("GO terms: cellular component")+ scale_fill_brewer(palette="Reds", name = "Regulation") + theme(text = element_text(size = 15))
 
 ## OVERLAP WITH LITERATURE (Figure 10)
 qs <- data.frame(DEGs$external_geneid)
 colnames(qs) <- "Genes"
-## Transcriptome studies
+
+## Transcriptome studies ##
 public <- read_excel("Data/DEGs_Studies_full_list.xlsx")
 pub1 <- na.omit(data.frame(public[,1]))
 colnames(pub1) <- "Genes"
@@ -435,7 +432,7 @@ colnames(pub4) <- "Genes"
 all <- unique(rbind(pub1,pub2,pub3,pub4))
 merge1 <- merge(qs, all, by = "Genes")
 
-## Methylation ##
+## DNA Methylation studies ##
 public <- read_excel("Data/DMGs_Studies_full_list.xlsx")
 pub1
 pub1 <- na.omit(data.frame(public[,1]))
@@ -452,7 +449,9 @@ x <- list(
   Transcriptome = c(all$Genes), 
   Methylome = c(all2$Genes)
 )
+
+## Venn diagram
 ov <- ggVennDiagram(x)
-ov$labels
+## Common DEGs and DMGs with in-house dataset
 t <- merge(merge1, merge2, by = "Genes")
 WriteXLS::WriteXLS(t, "Common_genes_in-house&published_data. xlsx")
