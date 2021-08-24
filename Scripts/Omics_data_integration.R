@@ -53,9 +53,10 @@ library(cowplot)
 library(umap)
 library(stringr)
 library(ggVennDiagram)
+library(splitstackshape)
 
 ## ---- Directory ---- ##
-
+setwd("~/Documents/GitHub/MT_Marta_Ibanez/")
 ## --- Additional functions/expressions used in the code --- ##
 `%nin%` = Negate(`%in%`)
 
@@ -66,7 +67,7 @@ message("+----------------------------------------------------------------------
 
 ## ----------------------------- DATASET 1: GSE70493 ------------------------------- ##
 ## ----- Samples table ----- ##
-sample_names <- read.delim("text.txt")
+sample_names <- read.delim("Data/samples_GSE70493.txt")
 sample_names.S1 <- sample_names[,-1]
 
 
@@ -83,7 +84,6 @@ sample_names.S1$color[sample_names.S1$Description == "GDM"] <- "#FFCC99"
 ## Intensity of raw data
 boxplot(rawData, which="all",las=2, main="Intensity distribution of RAW data", 
         cex.axis=0.6, names = sample_names.S1$matName, col = sample_names.S1$color)
-
 
 ## --- Converting into txt file to compute correlation --- ##
 rawData1.3 <- oligo::rma(rawData)
@@ -130,7 +130,6 @@ rownames(eset) <- new_row.names$ensembl_gene_id
 head(eset)
 Non.annotated1 <- which(is.na(rownames(eset)) == TRUE)
 
-
 ## ----- PCA ----- ##
 ## function to compute Principal Component Analysis (PCA) and plot it
 plotPCA <- function ( X, labels=NULL, colors=NULL, dataDesc="", scale=FALSE, formapunts=NULL, myCex=0.8,...)
@@ -160,7 +159,8 @@ select_top_variable.genes <- function(counts, TOPNUM){
 
 counts.dataset1 <- select_top_variable.genes(eset, 2000 )
 rownames(counts.dataset1) <- sample_names.S1$Sample
-## PLS-DA WITH ALL SAMPLES
+
+## --- PLS-DA WITH ALL SAMPLES --- ##
 group.dataset1 <- sample_names.S1$Description
 placenta_gene_expression.plsda1 <- opls(counts.dataset1, factor(group.dataset1), predI = 2) 
 plot(placenta_gene_expression.plsda1,
@@ -169,7 +169,7 @@ plot(placenta_gene_expression.plsda1,
      parLabVc = as.character(paste0(sample_names$matName)),
      parPaletteVc = c("darkblue", "darkgreen"))
 
-## PLS-DA WITH SELECTED SAMPLES
+## --- PLS-DA WITH SELECTED SAMPLES --- ##
 ## select and remove unwanted samples
 colnames_toberemoved <- sample_names.S1[sample_names.S1$matName %in%  c("normal_R53", "normal_R53_rep1", "normal_R53_rep2", "normal_R3", "normal_R36", "GDM_R4", "normal_R5", "normal_R33",  "GDM_R6", "normal_R1", "normal_R1_rep1", "normal_R1_rep2", "GDM_R2", "GDM_R6", "GDM_R13", "normal_R7", "GDM_R26"),1]
 samples1.removed1 <- sample_names.S1[sample_names.S1$matName %nin% c("normal_R53", "normal_R53_rep1", "normal_R53_rep2", "normal_R3", "normal_R36", "GDM_R4", "normal_R5", "normal_R33",  "GDM_R6", "normal_R1", "normal_R1_rep1", "normal_R1_rep2", "GDM_R2", "GDM_R6", "GDM_R13", "normal_R7", "GDM_R26"),]
@@ -195,11 +195,11 @@ rawData2.expression <- x[[1]]
 ids.data2 <- featureData(rawData2.expression)@data
 ## Collect ids from dataframe
 pobeids2 <- featureNames(rawData2.expression)
-## Upload data as a normal matrix
+## Upload data as a normal matrix (needs to be downloaded from GEO-NCBI)
 rawData2 <- as.matrix(read.delim("Datasets/GSE19649_non-normalized.txt"))
 
 ## Samples
-samples <- read.delim("Samples_GSE19649.txt")
+samples <- read.delim("Data/Samples_GSE19649.txt")
 
 ## Select samples of GEO matrix from placenta
 rawData2.1 <- as.matrix(data.frame(rawData2[,1], rawData2[,8], rawData2[,9],rawData2[,10], rawData2[,11]))
@@ -294,10 +294,10 @@ write.csv(data1_filtered.common, "data1_filtered.common.csv")
 
 ## ------------ Combine Data -------------- ##
 ## --- Load data (if necessary) --- ##
-data2_filtered.common <- read.csv("data2_filtered.common.csv")
+data2_filtered.common <- read.csv("Data/data2_filtered.common_TRANSCRIPTOME.csv")
 rownames(data2_filtered.common) <- data2_filtered.common$X
 data2_filtered.common <- data2_filtered.common[,-1]
-data1_filtered.common <- read.csv("data1_filtered.common.csv")
+data1_filtered.common <- read.csv("Data/data1_filtered.common_TRANSCRIPTOME.csv")
 rownames(data1_filtered.common) <- data1_filtered.common$X
 data1_filtered.common <- data1_filtered.common[,-1]
 
@@ -324,7 +324,7 @@ combined_samples <- combined_samples[-which((combined_samples$matName %in% c("no
 combined.data <- combined.data[,(colnames(combined.data) %in% combined_samples$Sample)]
 
 ## Save combined samples and matrix of log2 intensity values
-write.csv2(combined.data, "Combined_Data1_Data2_matrix.csv")
+write.csv2(combined.data, "Combined_Data1_Data2_matrix_transcriptome.csv")
 write.csv2(combined_samples, "Final_Samples_Data1&2.csv")
 
 ## Cross-platform normalization and PCA
@@ -420,9 +420,9 @@ write.csv2(pls.DEGs,"DEGs_data_integration.csv")
 write.csv2()
 
 ## Heatmap
-degs.data_int <- read.csv2("DEGs_data_integration.csv")
-comb_data <- read.csv2("Combined_Data1_Data2_matrix.csv")
-samples <- read.csv2("Final_Samples_Data1&2.csv")
+degs.data_int <- read.csv2("Results/DEGs_data_integration.csv")
+comb_data <- read.csv2("Data/Combined_Data1_Data2_matrix_transcriptome.csv")
+samples <- read.csv2("Final_Samples_Data1&2_transcriptome.csv")
 mod = model.matrix(~relevel(as.factor(Description), "Normal"), data=samples)
 colnames(mod) <- c("Normal", "GDM")
 combat_edata3 = ComBat(dat=comb_data[,-1], batch = samples$batch, mod = mod )
@@ -435,8 +435,8 @@ logCPM <- t(scale(t(heatmap.data)))
 pheatmap(logCPM, scale = "row", cluster_cols = FALSE, labels_row = rep(" ", nrow(heatmap.data)))
 
 ## Integration of single-cell, UMAP dimensionality reduction and generation of heatmap
-sc_mat <- read_excel("scSeq-Results.xlsx")
-deg <- read.csv2("DEGs_data_integration.csv")
+sc_mat <- read_excel("Data/scSeq-Results_mat.xlsx")
+deg <- read.csv2("Results/DEGs_data_integration.csv")
 colnames(deg)[9] <- "Gene"
 head(sc_mat)
 colnames(sc_mat) <- sc_mat[3,]
@@ -464,7 +464,7 @@ pheatmap(data, scale = "row",  labels_row = rep(" ", nrow(data)), cluster_cols =
 
 ## ------------- Plots for enrichment analysis --------------- ##
 ## BIOLOGICAL PROCESS
-BP <- read.delim("Results/GO_Biological_Process_2021_table_final.txt")
+BP <- read.delim("Results/GO_Biological_Process_2021_table_TRANSCRIPTOME.txt")
 BP <- BP[BP$P.value < 0.05,]
 BP <- BP[order(str_count(string = BP$Genes, pattern = ";"), decreasing = TRUE),]
 BP$label <- paste0("n = ", str_count(string = BP$Genes, pattern = ";")+1)
@@ -474,7 +474,7 @@ p <- ggplot(data = BP[1:20,], aes(x = -log10(P.value), y = Term)) + geom_col(fil
                                                     inherit.aes = TRUE)
 
 ## MOLECULAR FUNCTION
-MF <- read.delim("Results/GO_Molecular_Function_2021_table-2_final.txt")
+MF <- read.delim("Results/GO_Molecular_Function_2021_table_TRANSCRIPTOME.txt")
 MF <- MF[MF$P.value < 0.05,]
 MF <- MF[order(str_count(string = MF$Genes, pattern = ";"), decreasing = TRUE),]
 MF$label <- paste0("n = ", str_count(string = MF$Genes, pattern = ";")+1)
@@ -483,7 +483,7 @@ ggplot(data = MF[1:20,], aes(x = -log10(P.value), y = Term)) + geom_col(fill = "
                                                     position = position_dodge(width = 1),
                                                     inherit.aes = TRUE)
 ## CELLULAR COMPONENT
-CC <- read.delim("Results(GO_Cellular_Component_2021_table-2_final.txt")
+CC <- read.delim("Results/GO_Cellular_Component_2021_table_TRANSCRIPTOME.txt")
 CC <- CC[CC$P.value < 0.05,]
 CC <- CC[order(str_count(string = CC$Genes, pattern = ";"), decreasing = TRUE),]
 CC$label <- paste0("n = ", str_count(string = CC$Genes, pattern = ";")+1)
@@ -493,7 +493,7 @@ ggplot(data = CC[1:14,], aes(x = -log10(P.value), y = Term)) + geom_col(fill = "
                                                     position = position_dodge(width = 1),
                                                     inherit.aes = TRUE)
 ## KEGG 
-kegg <- read.delim("Results/KEGG_2021_Human_table-2.txt")
+kegg <- read.delim("Results/KEGG_2021_Human_table_TRANSCRIPTOME.txt")
 kegg <- kegg[kegg$P.value < 0.05,]
 kegg <- kegg[order(str_count(string = kegg$Genes, pattern = ";"), decreasing = TRUE),]
 kegg$label <- paste0("n = ", str_count(string = kegg$Genes, pattern = ";")+1)
@@ -534,7 +534,7 @@ un <- as.matrix(Study1[,un.stored ])
 data1 <- readGEORawFile(filename ="GSE70453_Matrix_signal_intensities.csv", Uname = "Unmethylated.Signal", Mname = "Methylated.signal",  )
 
 ## Samples
-GSE70453_samples <- read.delim("GSE70453_samples.txt")
+GSE70453_samples <- read.delim("Data/GSE70453_samples.txt")
 files <- sampleNames(data1)
 GSE70453_samples <- cbind(GSE70453_samples, files)
 
@@ -578,7 +578,7 @@ data1.samples_filtered.norm <- dropLociWithSnps(data1.samples_filtered.norm)
 data1.samples_filtered.norm
 
 # exclude cross reactive probes 
-xReactiveProbes <- read.csv(file="48639-non-specific-probes-Illumina450k.csv")
+xReactiveProbes <- read.csv(file="Data/48639-non-specific-probes-Illumina450k.csv")
 head(xReactiveProbes)
 keep <- !(featureNames(data1.samples_filtered.norm) %in% xReactiveProbes$TargetID)
 table(keep)
@@ -639,7 +639,7 @@ ann450k <- getAnnotation(IlluminaHumanMethylation450kanno.ilmn12.hg19)
 head(ann450k)
 
 # Samples
-GSE153220_samples <- read.delim("GSE153220/idat/GSE153220_samples.txt")
+GSE153220_samples <- read.delim("Data/GSE153220_samples.txt")
 GSE153220_samples <- cbind(GSE153220_samples, sampleNames(data2))
 GSE153220_samples$Group <- "GDM"
 normal <- grep("Normal", GSE153220_samples$MatName)
@@ -820,11 +820,11 @@ joined_samples.flt <- joined_samples[joined_samples$SampleFile %in% tokeep,]
 colnames(joined_Bvals) <- joined_samples$SampleFile
 
 ### LOAD DATA FROM B-VALUES OF DESIRED SAMPLES ##
-joined_Bvals <- read.csv2("Bvals_final.csv")
+joined_Bvals <- read.csv2("Data/Bvals_final.csv")
 head(joined_Bvals)
 joined_Bvals.flt <- joined_Bvals[,-1]
 rownames(joined_Bvals.flt) <- joined_Bvals$X
-joined_samples.flt <- read.csv2("final_samples_meth.csv")
+joined_samples.flt <- read.csv2("Data/final_samples_methylation.csv")
 
 ## Beta
 joined_Bvals.flt <- joined_Bvals[,colnames(joined_Bvals) %in%  joined_samples.flt$SampleFile]
@@ -895,7 +895,7 @@ write.csv2(joined_Bvals.flt, "Bvals_final.csv")
 
 ## Heatmap ##
 DMGs <- read.csv("DMPs_Bvals.csv")
-samples <- read.csv2("final_samples_meth.csv")
+samples <- read.csv2("Data/final_samples_meth.csv")
 heatmap.data <- DMGs[, 29:ncol(DMGs)]
 test <- data.frame(colnames(heatmap.data),samples$SampleFile) ## same order
 colnames(heatmap.data) <- samples$MatName
@@ -906,7 +906,7 @@ pheatmap(logCPM, scale = "row", cluster_cols = FALSE, labels_row = rep(" ", nrow
 
 ## ENRICHMENT ANALYSIS
 ## BIOLOGICAL PROCESS
-bp <- read.delim("GO_Biological_Process_2021_table-2_METH_FINAL.txt")
+bp <- read.delim("Results/GO_Biological_Process_2021_table_METHYLATION.txt")
 bp <- bp[bp$P.value < 0.05,]
 bp <- bp[order(str_count(string = bp$Genes, pattern = ";"), decreasing = TRUE),]
 bp$label <- paste0("n = ", str_count(bp$Genes, ";")+1)
@@ -916,7 +916,7 @@ p <-ggplot(data = bp[1:20,], aes(x = -log10(P.value), y = Term)) + geom_col(fill
                                                     inherit.aes = TRUE)
 
 ## MOLECULAR FUNCTION
-mf <- read.delim("GO_Molecular_Function_2021_table-2._METH_FINALtxt.txt")
+mf <- read.delim("Results/GO_Molecular_Function_2021_table_METHYLATION.txt")
 mf <- mf[mf$P.value < 0.05,]
 mf <- mf[order(str_count(string = mf$Genes, pattern = ";"), decreasing = TRUE),]
 mf$label <- paste0("n = ", str_count(mf$Genes, ";")+1)
@@ -926,7 +926,7 @@ p <- ggplot(data = mf[1:20,], aes(x = -log10(P.value), y = Term)) + geom_col(fil
              inherit.aes = TRUE) + theme(text =  element_text(size=20))
 
 ## CELLULAR COMPONENT
-cc <- read.delim("GO_Cellular_Component_2021_table-2_METH_FINAL.txt")
+cc <- read.delim("Results/GO_Cellular_Component_2021_table_METHYLATION.txt")
 cc <- cc[cc$P.value < 0.05,]
 cc <- cc[order(str_count(string = cc$Genes, pattern = ";"), decreasing = TRUE),]
 cc$label <- paste0("n = ", str_count(cc$Genes, ";")+1)
@@ -936,7 +936,7 @@ p <- ggplot(data = cc, aes(x = -log10(P.value), y = Term)) + geom_col(fill = "sa
                                                                                  inherit.aes = TRUE)
 
 ## KEGG
-KEGG <- read.delim("KEGG_2021_Human_table-2_METH_FINAL.txt")
+KEGG <- read.delim("Results/KEGG_2021_Human_table_METHYLATION.txt")
 KEGG <- KEGG[KEGG$P.value < 0.05,]
 KEGG <- KEGG[order(str_count(string = KEGG$Genes, pattern = ";"), decreasing = TRUE),]
 KEGG$label <- paste0("n = ", str_count(KEGG$Genes, ";")+1)
@@ -946,8 +946,7 @@ ggplot(data = KEGG, aes(x = -log10(P.value), y = Term)) + geom_col(fill = "pink3
                                                                             inherit.aes = TRUE)
 
 ## Integration with single-cell placental transcriptome + UMAP dimensionality reduction
-sc_mat <- read_excel("/Volumes/TOSHIBA EXT/TFM/Data_Integration/Transcriptome/scSeq-Results.xlsx")
-markers <- read_excel("/Volumes/TOSHIBA EXT/TFM/Data_Integration/Transcriptome/Markers.xlsx")
+sc_mat <- read_excel("Data/scSeq-Results_mat.xlsx")
 dmg <- genes
 colnames(dmg) <- "Gene"
 head(dmg)
@@ -967,6 +966,7 @@ colnames(df) <-  c("UMAP_1", "UMAP_2")
 groups <- data.frame(apply(data, 1, max))
 groups$cell <- colnames(data)[apply(data,1,which.max)]
 df <- cbind(df, data.frame(rownames(df)), type = "UMAP",celltype =  groups$cell)
+
 ## plot UMAP
 ggplot(df, aes(x = UMAP_1, y = UMAP_2)) +
   geom_point(size = 0.7, alpha = 0.5, aes(col = celltype))  + theme_minimal() + labs(col = "Cell type") + theme(legend.text=element_text(size=10), legend.title  = element_text(size=10))
@@ -980,10 +980,10 @@ pheatmap(data, scale = "row",  labels_row = rep(" ", nrow(data)), cluster_cols =
 
 
 ## OVERLAP WITH QUANTSEQ DATA + PUBLIC DATA AND CREATE VENN DIAGRAMS ##
-public_data.degs <- read_excel("~/Desktop/Master_UB/TFM/DEGs_Studies_full_list.xlsx")
-public_data.dmgs <-read_excel("~/Desktop/Master_UB/TFM/DMGs_full_studies.xlsx")
-DEGs.DMGs_int <- read_excel("~/Desktop/Master_UB/TFM/DEGs_DMGs_integration.xlsx")
-QS.DEGs <- rread.csv2("~/Documents/GitHub/QuantSeq-data-analysis/Results/DEGs_GDMvsLEAN/pls_DEGs_GDMvsLEAN.csv")
+public_data.degs <- read_excel("Data/DEGs_Studies_full_list.xlsx")
+public_data.dmgs <-read_excel("Data/DMGs_full_studies.xlsx")
+DEGs.DMGs_int <- read_excel("Results/DEGs_DMGs_integration.xlsx") ## DEGs and DMGs from integration of transcriptome and methylome-wide datasets
+QS.DEGs <- rread.csv2("pls_DEGs_GDMvsLEAN.csv") ## in-house DEGs
 qs <- data.frame(QS.DEGs$external_geneid)
 qs <- qs[qs$QS.DEGs.external_geneid != "",]
 colnames(public_data.degs) <- c("genes", "genes", "genes", "genes")
@@ -1035,18 +1035,17 @@ studies2 <- data.frame(
       data_studies[,1:ncol(data_studies)],
       function(x) ifelse(key %in% x == TRUE, 1, 0))))
 
-## -- UpsetR overlap -- ##
-plot <- upset(studies2, nsets =5)
 
+## Venn diagram
 int.venn <- list(
   DEGs_int =c(DEGs_int$Gene ),
   DMGs_int = c(DMGs_int))
 ggVennDiagram(int.venn)
 
 ## ------ Correlate gene expression with methylation ------- ##
-expression.vals <- read.csv2("/Volumes/TOSHIBA EXT/TFM/Data_Integration/Transcriptome/Combined_Data1_Data2_matrix.csv")
-degs.data_int <- read.csv2("/Volumes/TOSHIBA EXT/TFM/Data_Integration/Transcriptome/DEGs_data_integration.csv")
-samples <- read.csv2("/Volumes/TOSHIBA EXT/TFM/Data_Integration/Transcriptome/Final_Samples_Data1&2.csv")
+expression.vals <- read.csv2("Data/Combined_Data1_Data2_matrix_transcriptome.csv")
+degs.data_int <- read.csv2("Results/DEGs_data_integration.csv")
+samples <- read.csv2("Data/Final_Samples_Data1&2_transcriptome.csv")
 mod = model.matrix(~relevel(as.factor(Description), "Normal"), data=samples)
 colnames(mod) <- c("Normal", "GDM")
 combat_edata3 = ComBat(dat=expression.vals[,-1], batch = samples$batch, mod = mod )
@@ -1061,7 +1060,7 @@ ens <- degs.data_int$X[degs.data_int$external_geneid %in% c(ovlp$Gene)]
 cor.data1 <- data.frame(combat_edata3[ens,])
 rownames(cor.data1) <- ovlp$Gene
 cor.data1 <- cor.data1[order(rownames(cor.data1)),]
-DMGs <- read.csv("DMPs_Bvals.csv")
+DMGs <- read.csv("Results/DMPs_Bvals.csv")
 out <- cSplit(DMGs, "UCSC_RefGene_Name", sep=";", "long")
 DMGs <- out[out$UCSC_RefGene_Name  %in% c(ovlp$Gene) ,]
 DMGs$mean <- rowMeans(DMGs[,29:ncol(DMGs)])

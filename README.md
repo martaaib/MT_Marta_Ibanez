@@ -38,6 +38,9 @@ Information about repository and folders content.
 | data2_filtered.common_TRANSCRIPTOME.csv | Filtered and common transcripts in transcriptome-wide dataset 2: GSE19649. |
 | Combined_Data1_Data2_matrix_transcriptome.csv | Combined normalized values from the integrated transcriptome datasets. |
 | Final_Samples_Data1&2_transcriptome.csv | Table of final selected samples and their corresponding information to the integrated transcriptome-wide datasets. |
+| GSE70453_samples.txt | Samples from one of the methylome-wide datasets used in the DNA methylation integration. |
+| GSE153220_samples.txt | Samples from the second methylome-wide dataset used in the DNA methylation integration. |
+| 48639-non-specific-probes-Illumina450k.csv | Cross-reactive probes from Illumina 450K Methylation Array. |
 
 
 ## Results ##
