@@ -45,8 +45,6 @@ Information about repository and folders content.
 | final_samples_methylation.csv | Selected samples used for differential methylation analysis of integrated methylome-wide placental datasets. |
 
 
-
-
 ## Results ##
 | File | Description |
 | ----------------------------- | ----------------------- |
