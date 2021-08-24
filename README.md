@@ -35,6 +35,8 @@ Information about repository and folders content.
 | Final_Samples_Data1&2_transcriptome.csv | Table of final selected samples and their corresponding information to the integrated transcriptome-wide datasets. |
 
 ## Results ##
+| File | Description |
+| ----------------------------- | ----------------------- |
 | Common_DMGs.xlsx | 44 DMGs found to be present in all the three methylome-wide selected studies. |
 | Common_genes_in-house&published_data.xlsx | Genes found to be differentially expressed and methylated in the in-house dataset, selected transcriptome/methylome-wide studies. |
 | Reactome_results_DMGs.csv | Reactome results from analysis of DMGs found to be present in all selected methylome-wide studies. |
